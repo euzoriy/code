@@ -27,7 +27,7 @@ Sub Main
 Const XOffsetDim as Double = 0
 Const YOffsetDim as Double = 3
 'offsets from notes
-Const XOffsetNote as Double = -3.5
+Const XOffsetNote as Double = -4.5
 Const YOffsetNote as Double = 2
 'offsets from surface finish
 Const XOffsetSF as Double = 4
