@@ -22,9 +22,10 @@ Module journal
       selobj = theUI.SelectionManager.GetSelectedObject(inx)
  
       ufs.Obj.AskTypeAndSubtype(selobj.Tag, type, subtype)
-      lw.WriteLine("Object: " & selobj.ToString())
+			
+      lw.WriteLine(" Object: " & selobj.ToString())
       lw.WriteLine(" Tag: " & selobj.Tag.ToString())
-	  lw.WriteLine(" Type(text): " & selobj.GetType().ToString())	  
+			lw.WriteLine(" Type(text): " & selobj.GetType().ToString())	  
       lw.WriteLine(" Type: " & type.ToString())
       lw.WriteLine(" Subtype: " & subtype.ToString())
       lw.WriteLine("")
