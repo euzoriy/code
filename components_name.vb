@@ -1,5 +1,3 @@
-
-
 Option Strict Off
  
 Imports System
