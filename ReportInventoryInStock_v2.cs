@@ -10,7 +10,7 @@ using System.Xml.Serialization;
 namespace ReadXMLFile
 {
     [Serializable]
-    public class InventoryList
+    public class ItemInfo
     {
         public int ID { get; set; }
         public string PartNumber { get; set; }
@@ -19,7 +19,7 @@ namespace ReadXMLFile
         public string Location { get; set; }
         public string VendorPartNumber { get; set; }
 
-        // public InventoryList(string partNumber, int id, string qty, string leestaPartNumber, 
+        // public ItemInfo(string partNumber, int id, string qty, string leestaPartNumber, 
 		// string location, string vendorPartNumber)
         // {
             // PartNumber = partNumber;
@@ -45,17 +45,17 @@ namespace ReadXMLFile
             theSession.ListingWindow.WriteLine(output);
             theSession.LogFile.WriteLine(output);
         }
-        public static List<InventoryList> Deserialization()
+        public static List<ItemInfo> Deserialization()
         {
             // передаем в конструктор тип класса
-            XmlSerializer formatter = new XmlSerializer(typeof(List<InventoryList>));
+            XmlSerializer formatter = new XmlSerializer(typeof(List<ItemInfo>));
             try
             {
                 // десериализация
                 using (FileStream fs = 
 				new FileStream(xmlLocation, FileMode.OpenOrCreate))
                 {
-                    List<InventoryList> il = (List<InventoryList>)formatter.Deserialize(fs);
+                    List<ItemInfo> il = (List<ItemInfo>)formatter.Deserialize(fs);
                     return il;
                 }
             }
@@ -76,7 +76,7 @@ namespace ReadXMLFile
                 {
 					int count = 0;
 					
-                    List<InventoryList> il = Deserialization();
+                    List<ItemInfo> il = Deserialization();
                     //Create component list, <PartName>, <Qty>
                     Dictionary<string, int> cl = new Dictionary<string, int>();
                     //Add to the dictionary copmonet values
