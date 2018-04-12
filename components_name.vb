@@ -1,20 +1,15 @@
 Option Strict Off
- 
 Imports System
 Imports NXOpen
 Imports NXOpen.UF
 Imports NXOpen.Assemblies
- 
 Module Module1
- 
     Dim theSession As Session = Session.GetSession()
     Dim ufs As UFSession = UFSession.GetUFSession()
     Dim lw As ListingWindow = theSession.ListingWindow
- 
     Sub Main()
         Dim workPart As Part = theSession.Parts.Work
         Dim dispPart As Part = theSession.Parts.Display
- 
         lw.Open()
         Try
             Dim c As ComponentAssembly = dispPart.ComponentAssembly
@@ -25,12 +20,9 @@ Module Module1
             theSession.ListingWindow.WriteLine("Failed: " & e.ToString)
         End Try
         lw.Close()
- 
     End Sub
- 
     Sub reportComponentChildren(ByVal comp As Component, _
         ByVal indent As Integer)
- 
         For Each child As Component In comp.GetChildren()
             '*** insert code to process component or subassembly
             If LoadComponent(child) Then
@@ -44,18 +36,14 @@ Module Module1
             reportComponentChildren(child, indent + 1)
         Next
     End Sub
- 
     Private Function LoadComponent(ByVal theComponent As Component) As Boolean
- 
         Dim thePart As Part = theComponent.Prototype.OwningPart
- 
         Dim partName As String = ""
         Dim refsetName As String = ""
         Dim instanceName As String = ""
         Dim origin(2) As Double
         Dim csysMatrix(8) As Double
         Dim transform(3, 3) As Double
- 
         Try
             If thePart.IsFullyLoaded Then
                 'component is fully loaded
@@ -67,12 +55,9 @@ Module Module1
             'component is not loaded
             Try
                 ufs.Assem.AskComponentData(theComponent.Tag, partName, refsetName, instanceName, origin, csysMatrix, transform)
- 
                 Dim theLoadStatus As PartLoadStatus
                 theSession.Parts.Open(partName, theLoadStatus)
- 
                 If theLoadStatus.NumberUnloadedParts > 0 Then
- 
                     Dim allReadOnly As Boolean = True
                     For i As Integer = 0 To theLoadStatus.NumberUnloadedParts - 1
                         If theLoadStatus.GetStatus(i) = 641058 Then
@@ -92,7 +77,6 @@ Module Module1
                 Else
                     Return True
                 End If
- 
             Catch ex2 As NXException
                 lw.WriteLine("error: " & ex2.Message)
                 Return False
@@ -102,12 +86,8 @@ Module Module1
             lw.WriteLine("error: " & ex.Message)
             Return False
         End Try
- 
     End Function
- 
     Public Function GetUnloadOption(ByVal dummy As String) As Integer
         Return Session.LibraryUnloadOption.Immediately
     End Function
- 
 End Module
-
