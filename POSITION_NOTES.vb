@@ -40,7 +40,8 @@ Module Module1
             Return
         End If
 
-        'lw.Open()
+        lw.Open()
+        lw.writeline("journal opened")
 
         Const undoMarkName As String = "NXJ form demo journal"
         Dim markId1 As Session.UndoMarkId
@@ -88,11 +89,6 @@ Module Module1
 
 
 
-
-
-
-
-
         lw.Close()
 
     End Sub
@@ -120,16 +116,32 @@ Module Module1
         ' ----------------------------------------------
         Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
         markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Start")
+
+
+        'select annotation
         Dim draftingDatum1 As NXOpen.Annotations.DraftingDatum = CType(workPart.FindObject("ENTITY 25 1 1"), NXOpen.Annotations.DraftingDatum)
+
+        'create annotation builder
         Dim draftingDatumFeatureSymbolBuilder1 As NXOpen.Annotations.DraftingDatumFeatureSymbolBuilder = Nothing
         draftingDatumFeatureSymbolBuilder1 = workPart.Annotations.Datums.CreateDraftingDatumFeatureSymbolBuilder(draftingDatum1)
+
+
+        Dim originData As NXOpen.Annotations.Annotation.AssociativeOriginData
+        originData = draftingDatumFeatureSymbolBuilder1.Origin.GetAssociativeOrigin()
+
+        'Namespaces > NXOpen.Annotations > Annotation > Annotation.AssociativeOriginData
+        lw.writeline("old position " & originData.XOffsetFactor & ";" & originData.YOffsetFactor)
+        'lw.writeline("Horizontal Annotation " & originData.HorizAnnotation.ToString)
+        'lw.writeline("Vertical Annotation " & originData.VertAnnotation.ToString)
+        lw.writeline("Type of associativity  " & originData.OriginType.ToString)
+
         theSession.SetUndoMarkName(markId1, "Datum Feature Symbol Dialog")
         draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
-        Dim leaderData1 As NXOpen.Annotations.LeaderData = Nothing
-        leaderData1 = workPart.Annotations.CreateLeaderData()
+        'Dim leaderData1 As NXOpen.Annotations.LeaderData = Nothing
+        'leaderData1 = workPart.Annotations.CreateLeaderData()
         'leaderData1.StubSize = 0.125
         'leaderData1.Arrowhead = NXOpen.Annotations.LeaderData.ArrowheadType.FilledArrow
-        leaderData1.VerticalAttachment = NXOpen.Annotations.LeaderVerticalAttachment.Center
+        'leaderData1.VerticalAttachment = NXOpen.Annotations.LeaderVerticalAttachment.Center
         'draftingDatumFeatureSymbolBuilder1.Leader.Leaders.Append(leaderData1)
         'leaderData1.TerminatorType = NXOpen.Annotations.LeaderData.LeaderType.Datum
         'leaderData1.StubSide = NXOpen.Annotations.LeaderSide.Inferred
@@ -163,13 +175,8 @@ Module Module1
 
 
         assocOrigin1.OffsetAnnotation = majorAngularDimension1
+        'Alignment type specification
         assocOrigin1.OffsetAlignmentPosition = NXOpen.Annotations.AlignmentPosition.TopLeft
-        'If IsNull(assocOrigin1.XOffsetFactor) Then
-        '    assocOrigin1.XOffsetFactor = 0.0
-        'End If
-        'If IsNull(assocOrigin1.YOffsetFactor) Then
-        '    assocOrigin1.YOffsetFactor = 0.0
-        'End If
 
         lw.writeline("old position " & assocOrigin1.XOffsetFactor & ";" & assocOrigin1.YOffsetFactor)
 
@@ -249,6 +256,14 @@ Public Class fPosition
         End If
     End Sub
 
+    Private Sub btAnnotation_Click(sender As Object, e As EventArgs) Handles btAnnotation.Click
+
+    End Sub
+
+    Private Sub btOrigin_Click(sender As Object, e As EventArgs) Handles btOrigin.Click
+
+    End Sub
+
 End Class
 
 <Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
@@ -284,12 +299,14 @@ Partial Class fPosition
         Me.posY = New System.Windows.Forms.TextBox()
         Me.Label1 = New System.Windows.Forms.Label()
         Me.Label2 = New System.Windows.Forms.Label()
+        Me.btAnnotation = New System.Windows.Forms.Button()
+        Me.btOrigin = New System.Windows.Forms.Button()
         CType(Me.numPositionIncrement, System.ComponentModel.ISupportInitialize).BeginInit()
         Me.SuspendLayout()
         '
         'posX
         '
-        Me.posX.Location = New System.Drawing.Point(32, 15)
+        Me.posX.Location = New System.Drawing.Point(32, 71)
         Me.posX.Name = "posX"
         Me.posX.Size = New System.Drawing.Size(134, 20)
         Me.posX.TabIndex = 0
@@ -298,7 +315,7 @@ Partial Class fPosition
         '
         'btUp
         '
-        Me.btUp.Location = New System.Drawing.Point(12, 67)
+        Me.btUp.Location = New System.Drawing.Point(12, 123)
         Me.btUp.Name = "btUp"
         Me.btUp.Size = New System.Drawing.Size(154, 23)
         Me.btUp.TabIndex = 1
@@ -307,7 +324,7 @@ Partial Class fPosition
         '
         'btDown
         '
-        Me.btDown.Location = New System.Drawing.Point(12, 142)
+        Me.btDown.Location = New System.Drawing.Point(12, 198)
         Me.btDown.Name = "btDown"
         Me.btDown.Size = New System.Drawing.Size(154, 23)
         Me.btDown.TabIndex = 2
@@ -316,7 +333,7 @@ Partial Class fPosition
         '
         'btLeft
         '
-        Me.btLeft.Location = New System.Drawing.Point(12, 96)
+        Me.btLeft.Location = New System.Drawing.Point(12, 152)
         Me.btLeft.Name = "btLeft"
         Me.btLeft.Size = New System.Drawing.Size(75, 40)
         Me.btLeft.TabIndex = 3
@@ -325,7 +342,7 @@ Partial Class fPosition
         '
         'btRight
         '
-        Me.btRight.Location = New System.Drawing.Point(93, 96)
+        Me.btRight.Location = New System.Drawing.Point(93, 152)
         Me.btRight.Name = "btRight"
         Me.btRight.Size = New System.Drawing.Size(73, 40)
         Me.btRight.TabIndex = 4
@@ -336,7 +353,7 @@ Partial Class fPosition
         '
         Me.numPositionIncrement.DecimalPlaces = 2
         Me.numPositionIncrement.Increment = New Decimal(New Integer() {5, 0, 0, 131072})
-        Me.numPositionIncrement.Location = New System.Drawing.Point(12, 171)
+        Me.numPositionIncrement.Location = New System.Drawing.Point(12, 227)
         Me.numPositionIncrement.Name = "numPositionIncrement"
         Me.numPositionIncrement.Size = New System.Drawing.Size(60, 20)
         Me.numPositionIncrement.TabIndex = 5
@@ -344,7 +361,7 @@ Partial Class fPosition
         '
         'posY
         '
-        Me.posY.Location = New System.Drawing.Point(32, 41)
+        Me.posY.Location = New System.Drawing.Point(32, 97)
         Me.posY.Name = "posY"
         Me.posY.Size = New System.Drawing.Size(134, 20)
         Me.posY.TabIndex = 0
@@ -354,7 +371,7 @@ Partial Class fPosition
         'Label1
         '
         Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(12, 18)
+        Me.Label1.Location = New System.Drawing.Point(12, 74)
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(17, 13)
         Me.Label1.TabIndex = 6
@@ -363,17 +380,37 @@ Partial Class fPosition
         'Label2
         '
         Me.Label2.AutoSize = True
-        Me.Label2.Location = New System.Drawing.Point(12, 44)
+        Me.Label2.Location = New System.Drawing.Point(12, 100)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(17, 13)
         Me.Label2.TabIndex = 6
         Me.Label2.Text = "Y:"
         '
+        'btAnnotation
+        '
+        Me.btAnnotation.Location = New System.Drawing.Point(12, 12)
+        Me.btAnnotation.Name = "btAnnotation"
+        Me.btAnnotation.Size = New System.Drawing.Size(154, 23)
+        Me.btAnnotation.TabIndex = 7
+        Me.btAnnotation.Text = "Select Annotaion"
+        Me.btAnnotation.UseVisualStyleBackColor = True
+        '
+        'btOrigin
+        '
+        Me.btOrigin.Location = New System.Drawing.Point(12, 41)
+        Me.btOrigin.Name = "btOrigin"
+        Me.btOrigin.Size = New System.Drawing.Size(154, 23)
+        Me.btOrigin.TabIndex = 8
+        Me.btOrigin.Text = "Select Origin"
+        Me.btOrigin.UseVisualStyleBackColor = True
+        '
         'fPosition
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(178, 213)
+        Me.ClientSize = New System.Drawing.Size(178, 259)
+        Me.Controls.Add(Me.btOrigin)
+        Me.Controls.Add(Me.btAnnotation)
         Me.Controls.Add(Me.Label2)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.numPositionIncrement)
@@ -403,181 +440,6 @@ Partial Class fPosition
     Friend WithEvents posY As TextBox
     Friend WithEvents Label1 As Label
     Friend WithEvents Label2 As Label
-End Class
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-''*******************************************************************************************
-Public Class Form1
-
-    Private _frmAttributeTitle As String
-    Public Property AttributeTitle() As String
-        Get
-            Return _frmAttributeTitle
-        End Get
-        Set(ByVal value As String)
-            _frmAttributeTitle = value
-        End Set
-    End Property
-
-    Private _frmAttributeValue As String
-    Public Property AttributeValue() As String
-        Get
-            Return _frmAttributeValue
-        End Get
-        Set(ByVal value As String)
-            _frmAttributeValue = value
-        End Set
-    End Property
-
-    Private _canceled As Boolean = False
-    Public ReadOnly Property Canceled() As Boolean
-        Get
-            Return _canceled
-        End Get
-    End Property
-
-    Private Sub Form1_Load(sender As System.Object, e As System.EventArgs) Handles MyBase.Load
-        Label1.Text = _frmAttributeTitle
-        TextBox1.Text = _frmAttributeValue
-    End Sub
-
-    Private Sub btnCancel_Click(sender As System.Object, e As System.EventArgs) Handles btnCancel.Click
-        _canceled = True
-        Me.Close()
-    End Sub
-
-    Private Sub btnOK_Click(sender As System.Object, e As System.EventArgs) Handles btnOK.Click
-        _frmAttributeValue = TextBox1.Text.ToUpper
-        Me.Close()
-    End Sub
-
-End Class
-<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
-Partial Class Form1
-    Inherits System.Windows.Forms.Form
-
-    'Form overrides dispose to clean up the component list.
-    <System.Diagnostics.DebuggerNonUserCode()>
-    Protected Overrides Sub Dispose(ByVal disposing As Boolean)
-        Try
-            If disposing AndAlso components IsNot Nothing Then
-                components.Dispose()
-            End If
-        Finally
-            MyBase.Dispose(disposing)
-        End Try
-    End Sub
-
-    'Required by the Windows Form Designer
-    Private components As System.ComponentModel.IContainer
-
-    'NOTE: The following procedure is required by the Windows Form Designer
-    'It can be modified using the Windows Form Designer.  
-    'Do not modify it using the code editor.
-    <System.Diagnostics.DebuggerStepThrough()>
-    Private Sub InitializeComponent()
-        Me.btnCancel = New System.Windows.Forms.Button()
-        Me.btnOK = New System.Windows.Forms.Button()
-        Me.Label1 = New System.Windows.Forms.Label()
-        Me.TextBox1 = New System.Windows.Forms.TextBox()
-        Me.Label2 = New System.Windows.Forms.Label()
-        Me.TextBox2 = New System.Windows.Forms.TextBox()
-        Me.SuspendLayout()
-        '
-        'btnCancel
-        '
-        Me.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel
-        Me.btnCancel.Location = New System.Drawing.Point(178, 107)
-        Me.btnCancel.Name = "btnCancel"
-        Me.btnCancel.Size = New System.Drawing.Size(85, 50)
-        Me.btnCancel.TabIndex = 0
-        Me.btnCancel.Text = "Cancel"
-        Me.btnCancel.UseVisualStyleBackColor = True
-        '
-        'btnOK
-        '
-        Me.btnOK.Location = New System.Drawing.Point(66, 107)
-        Me.btnOK.Name = "btnOK"
-        Me.btnOK.Size = New System.Drawing.Size(85, 50)
-        Me.btnOK.TabIndex = 1
-        Me.btnOK.Text = "Ok"
-        Me.btnOK.UseVisualStyleBackColor = True
-        '
-        'Label1
-        '
-        Me.Label1.Location = New System.Drawing.Point(12, 34)
-        Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(79, 13)
-        Me.Label1.TabIndex = 2
-        Me.Label1.Text = "Label1"
-        Me.Label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight
-        '
-        'TextBox1
-        '
-        Me.TextBox1.Location = New System.Drawing.Point(97, 31)
-        Me.TextBox1.Name = "TextBox1"
-        Me.TextBox1.Size = New System.Drawing.Size(166, 20)
-        Me.TextBox1.TabIndex = 3
-        '
-        'Label2
-        '
-        Me.Label2.Location = New System.Drawing.Point(12, 54)
-        Me.Label2.Name = "Label2"
-        Me.Label2.Size = New System.Drawing.Size(79, 13)
-        Me.Label2.TabIndex = 4
-        Me.Label2.Text = "Label2"
-        Me.Label2.TextAlign = System.Drawing.ContentAlignment.MiddleRight
-        '
-        'TextBox2
-        '
-        Me.TextBox2.Location = New System.Drawing.Point(97, 51)
-        Me.TextBox2.Name = "TextBox2"
-        Me.TextBox2.Size = New System.Drawing.Size(166, 20)
-        Me.TextBox2.TabIndex = 5
-        '
-        'Form1
-        '
-        Me.AcceptButton = Me.btnOK
-        Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
-        Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.CancelButton = Me.btnCancel
-        Me.ClientSize = New System.Drawing.Size(284, 176)
-        Me.Controls.Add(Me.TextBox1)
-        Me.Controls.Add(Me.Label1)
-        Me.Controls.Add(Me.TextBox2)
-        Me.Controls.Add(Me.Label2)
-        Me.Controls.Add(Me.btnOK)
-        Me.Controls.Add(Me.btnCancel)
-        Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
-        Me.MaximizeBox = False
-        Me.MinimizeBox = False
-        Me.Name = "Form1"
-        Me.Text = "Form1"
-        Me.ResumeLayout(False)
-        Me.PerformLayout()
-
-    End Sub
-    Friend WithEvents btnCancel As System.Windows.Forms.Button
-    Friend WithEvents btnOK As System.Windows.Forms.Button
-    Friend WithEvents Label1 As System.Windows.Forms.Label
-    Friend WithEvents TextBox1 As System.Windows.Forms.TextBox
-    Friend WithEvents Label2 As System.Windows.Forms.Label
-    Friend WithEvents TextBox2 As System.Windows.Forms.TextBox
-
+    Friend WithEvents btAnnotation As Button
+    Friend WithEvents btOrigin As Button
 End Class
