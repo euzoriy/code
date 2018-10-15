@@ -30,8 +30,6 @@ Module Module1
 
     Sub Main()
 
-
-
         'lw.Open()
         'lw.writeline("journal opened")
 
@@ -52,16 +50,11 @@ Module Module1
         If selectNoteDimension("Select annotation to locate.", selAnnotation) = Selection.Response.Ok Then
             If selAnnotation IsNot Nothing Then
 
-                'Dim draftingSymbolBuilder0 As NXOpen.Annotations.Builder = Nothing
-                'draftingSymbolBuilder0 = workPart.Annotations.Annotation.CreateDraftingDatumFeatureSymbolBuilder(selAnnotation)
                 Dim nullNXOpen_Point3d As NXOpen.Point3d = Nothing
                 Dim originData As NXOpen.Annotations.Annotation.AssociativeOriginData
-                'originData = draftingSymbolBuilder0.Origin.GetAssociativeOrigin()
                 originData = selAnnotation.GetAssociativeOrigin(nullNXOpen_Point3d)
-
                 'Namespaces > NXOpen.Annotations > Annotation > Annotation.AssociativeOriginData
                 lw.writeline("old position " & originData.XOffsetFactor & ";" & originData.YOffsetFactor)
-
                 myForm.posX.Text = originData.XOffsetFactor
                 myForm.posY.Text = originData.YOffsetFactor
                 'lw.writeline("Horizontal Alignment Position " & originData.HorizAlignmentPosition)
@@ -92,9 +85,12 @@ Module Module1
         End If
 
         lw.Close()
-        theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Invisible)
-        theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Visible)
 
+        theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Visible)
+        Dim nErrs1 As Integer = Nothing
+        nErrs1 = theSession.UpdateManager.DoUpdate(markId1)
+
+        'theSession.DeleteUndoMark(markId1, Nothing)
     End Sub
 
     Public Function GetUnloadOption(ByVal dummy As String) As Integer
@@ -122,17 +118,9 @@ Module Module1
     End Sub
 
     Sub moveNote(delta_x As Double, delta_y As Double)
-        ' ----------------------------------------------
-        '   Menu: Edit->Annotation->Annotation Object
-        ' ----------------------------------------------
-        Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
-        markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Start")
 
-        'Dim draftingDatumFeatureSymbolBuilder1 As NXOpen.Annotations.DraftingDatumFeatureSymbolBuilder = Nothing
-        'draftingDatumFeatureSymbolBuilder1 = workPart.Annotations.Datums.CreateDraftingDatumFeatureSymbolBuilder(selAnnotation)
-        'draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
-
-
+        'Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
+        'markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Start")
         ' ----------------------------------------------
         '   Dialog Begin Origin Tool
         ' ----------------------------------------------
@@ -166,22 +154,13 @@ Module Module1
         Dim nullNXOpen_Point3d As NXOpen.Point3d = Nothing
         selAnnotation.SetAssociativeOrigin(assocOrigin1, nullNXOpen_Point3d)
         RedrawAnnotation(selAnnotation)
-
-        'selAnnotation.RedisplayObject
-        'workPart.Views.WorkView.Regenerate()
-
-        'draftingDatumFeatureSymbolBuilder1.Origin.SetAssociativeOrigin(assocOrigin1)
-
-        'draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
-        'theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Invisible)
-        'Dim nXObject1 As NXOpen.NXObject = Nothing
-        'nXObject1 = draftingDatumFeatureSymbolBuilder1.Commit()
-        'draftingDatumFeatureSymbolBuilder1.Destroy()
-
-
     End Sub
 
     Sub RedrawAnnotation(annotation As NXOpen.DisplayableObject)
+        'annotation.RedisplayObject 'not working rightaway
+        'workPart.Views.WorkView.Regenerate() 'blinking all drawing (annoyng)
+
+        'a bit crazy way but it's working
         Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
         markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Refresh")
         Dim objects1(0) As NXOpen.DisplayableObject
@@ -196,6 +175,7 @@ Module Module1
         Dim marksRecycled1 As Boolean = Nothing
         Dim undoUnavailable1 As Boolean = Nothing
         theSession.UndoLastNVisibleMarks(1, marksRecycled1, undoUnavailable1)
+
     End Sub
 
     '**************************************************
@@ -205,6 +185,7 @@ Module Module1
         'Annotation -> DraftingAid -> SimpleDraftingAid -> NoteBase -> BaseNote -> Note
         'Dim ui As UI = GetUI()
         Dim mask(5) As Selection.MaskTriple
+
         With mask(0)
             .Type = UFConstants.UF_dimension_type
             .Subtype = 0
@@ -234,7 +215,7 @@ Module Module1
         'gd&t
         With mask(5)
             .Type = 25
-            .Subtype = 4
+            .Subtype = 0
             .SolidBodySubtype = 0
         End With
 
@@ -261,7 +242,7 @@ End Module
 
 
 
-
+' -----------------------------------------------------------------
 Public Class fPosition
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
@@ -357,7 +338,7 @@ Partial Class fPosition
         '
         'posX
         '
-        Me.posX.Location = New System.Drawing.Point(32, 44)
+        Me.posX.Location = New System.Drawing.Point(32, 12)
         Me.posX.Name = "posX"
         Me.posX.Size = New System.Drawing.Size(134, 20)
         Me.posX.TabIndex = 0
@@ -366,7 +347,7 @@ Partial Class fPosition
         '
         'btUp
         '
-        Me.btUp.Location = New System.Drawing.Point(12, 96)
+        Me.btUp.Location = New System.Drawing.Point(12, 64)
         Me.btUp.Name = "btUp"
         Me.btUp.Size = New System.Drawing.Size(154, 23)
         Me.btUp.TabIndex = 1
@@ -375,7 +356,7 @@ Partial Class fPosition
         '
         'btDown
         '
-        Me.btDown.Location = New System.Drawing.Point(12, 171)
+        Me.btDown.Location = New System.Drawing.Point(12, 139)
         Me.btDown.Name = "btDown"
         Me.btDown.Size = New System.Drawing.Size(154, 23)
         Me.btDown.TabIndex = 2
@@ -384,7 +365,7 @@ Partial Class fPosition
         '
         'btLeft
         '
-        Me.btLeft.Location = New System.Drawing.Point(12, 125)
+        Me.btLeft.Location = New System.Drawing.Point(12, 93)
         Me.btLeft.Name = "btLeft"
         Me.btLeft.Size = New System.Drawing.Size(75, 40)
         Me.btLeft.TabIndex = 3
@@ -393,7 +374,7 @@ Partial Class fPosition
         '
         'btRight
         '
-        Me.btRight.Location = New System.Drawing.Point(93, 125)
+        Me.btRight.Location = New System.Drawing.Point(93, 93)
         Me.btRight.Name = "btRight"
         Me.btRight.Size = New System.Drawing.Size(73, 40)
         Me.btRight.TabIndex = 4
@@ -404,7 +385,7 @@ Partial Class fPosition
         '
         Me.numPositionIncrement.DecimalPlaces = 2
         Me.numPositionIncrement.Increment = New Decimal(New Integer() {5, 0, 0, 131072})
-        Me.numPositionIncrement.Location = New System.Drawing.Point(12, 200)
+        Me.numPositionIncrement.Location = New System.Drawing.Point(12, 168)
         Me.numPositionIncrement.Name = "numPositionIncrement"
         Me.numPositionIncrement.Size = New System.Drawing.Size(60, 20)
         Me.numPositionIncrement.TabIndex = 5
@@ -412,7 +393,7 @@ Partial Class fPosition
         '
         'posY
         '
-        Me.posY.Location = New System.Drawing.Point(32, 70)
+        Me.posY.Location = New System.Drawing.Point(32, 38)
         Me.posY.Name = "posY"
         Me.posY.Size = New System.Drawing.Size(134, 20)
         Me.posY.TabIndex = 0
@@ -422,7 +403,7 @@ Partial Class fPosition
         'Label1
         '
         Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(12, 47)
+        Me.Label1.Location = New System.Drawing.Point(12, 15)
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(17, 13)
         Me.Label1.TabIndex = 6
@@ -431,7 +412,7 @@ Partial Class fPosition
         'Label2
         '
         Me.Label2.AutoSize = True
-        Me.Label2.Location = New System.Drawing.Point(12, 73)
+        Me.Label2.Location = New System.Drawing.Point(12, 41)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(17, 13)
         Me.Label2.TabIndex = 6
@@ -440,7 +421,7 @@ Partial Class fPosition
         'btAnnotation
         '
         Me.btAnnotation.Enabled = False
-        Me.btAnnotation.Location = New System.Drawing.Point(12, 12)
+        Me.btAnnotation.Location = New System.Drawing.Point(12, 194)
         Me.btAnnotation.Name = "btAnnotation"
         Me.btAnnotation.Size = New System.Drawing.Size(154, 10)
         Me.btAnnotation.TabIndex = 7
@@ -451,7 +432,7 @@ Partial Class fPosition
         'btOrigin
         '
         Me.btOrigin.Enabled = False
-        Me.btOrigin.Location = New System.Drawing.Point(12, 28)
+        Me.btOrigin.Location = New System.Drawing.Point(12, 210)
         Me.btOrigin.Name = "btOrigin"
         Me.btOrigin.Size = New System.Drawing.Size(154, 10)
         Me.btOrigin.TabIndex = 8
@@ -463,7 +444,7 @@ Partial Class fPosition
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(178, 232)
+        Me.ClientSize = New System.Drawing.Size(178, 195)
         Me.Controls.Add(Me.btOrigin)
         Me.Controls.Add(Me.btAnnotation)
         Me.Controls.Add(Me.Label2)
