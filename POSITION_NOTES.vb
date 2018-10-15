@@ -1,95 +1,99 @@
 Option Strict Off
 Imports System
+Imports System.Threading
 Imports System.Windows.Forms
 Imports NXOpen
-
-
-
+Imports NXOpen.UF
+Imports NXOpen.UI
+Imports NXOpenUI
+'Imports NXOpen.Annotations
 
 Module Module1
 
     Dim theSession As NXOpen.Session = NXOpen.Session.GetSession()
     Dim workPart As NXOpen.Part = theSession.Parts.Work
     Dim displayPart As NXOpen.Part = theSession.Parts.Display
+    Dim ufs As NXOpen.UF.UFSession = NXOpen.UF.UFSession.GetUFSession()
+    Dim aType As Integer
+    Dim subtype As Integer
+    Dim theUI As UI = ui.GetUI
+    Dim selobj As NXObject
+    'Dim ui As UI
+
     Dim lw As ListingWindow = theSession.ListingWindow
 
+    Dim selAnnotation As NXOpen.Annotations.Annotation 'NXObject
+    Dim origAnnotation As NXOpen.Annotations.Annotation 'NXObject
 
-    Private Const _attributeTitle As String = "PROJECT"
-    Public ReadOnly Property AttributeTitle() As String
-        Get
-            Return _attributeTitle
-        End Get
-    End Property
-
-
-    Private _attributeValue As String = ""
-    Public Property AttributeValue() As String
-        Get
-            Return _attributeValue
-        End Get
-        Set(ByVal value As String)
-            _attributeValue = value
-        End Set
-    End Property
+    'create new form object
+    Dim myForm As New fPosition
 
     Sub Main()
 
 
+
+        'lw.Open()
+        'lw.writeline("journal opened")
+
         If IsNothing(theSession.Parts.Work) Then
             'active part required
+            lw.writeline("active part required")
             Return
         End If
 
-        lw.Open()
-        lw.writeline("journal opened")
-
-        Const undoMarkName As String = "NXJ form demo journal"
+        Const undoMarkName As String = "Modifiying annotation position"
         Dim markId1 As Session.UndoMarkId
         markId1 = theSession.SetUndoMark(Session.MarkVisibility.Visible, undoMarkName)
 
-        Dim myAttributeInfo As NXObject.AttributeInformation
+        'Select annotation to work with
+        ufs.Ui.SetPrompt("Select Annotation to edit")
+        ufs.Ui.SetStatus("Selecting Annotation to edit")
+        'selectAnnotation()
+        If selectNoteDimension("Select annotation to locate.", selAnnotation) = Selection.Response.Ok Then
+            If selAnnotation IsNot Nothing Then
 
-        Try
-            myAttributeInfo = workPart.GetUserAttribute(_attributeTitle, NXObject.AttributeType.String, -1)
-            _attributeValue = myAttributeInfo.StringValue
+                'Dim draftingSymbolBuilder0 As NXOpen.Annotations.Builder = Nothing
+                'draftingSymbolBuilder0 = workPart.Annotations.Annotation.CreateDraftingDatumFeatureSymbolBuilder(selAnnotation)
+                Dim nullNXOpen_Point3d As NXOpen.Point3d = Nothing
+                Dim originData As NXOpen.Annotations.Annotation.AssociativeOriginData
+                'originData = draftingSymbolBuilder0.Origin.GetAssociativeOrigin()
+                originData = selAnnotation.GetAssociativeOrigin(nullNXOpen_Point3d)
 
-        Catch ex As NXException
-            If ex.ErrorCode = 512008 Then
-                'attribute not found
-            Else
-                'unexpected error: show error message, undo, and exit journal
-                MsgBox(ex.ErrorCode & ": " & ex.Message)
-                theSession.UndoToMark(markId1, undoMarkName)
-                Return
+                'Namespaces > NXOpen.Annotations > Annotation > Annotation.AssociativeOriginData
+                lw.writeline("old position " & originData.XOffsetFactor & ";" & originData.YOffsetFactor)
+
+                myForm.posX.Text = originData.XOffsetFactor
+                myForm.posY.Text = originData.YOffsetFactor
+                'lw.writeline("Horizontal Alignment Position " & originData.HorizAlignmentPosition)
+                'lw.writeline("Vertical Alignment Position " & originData.VertAlignmentPosition)
+                lw.writeline("Type of associativity  " & originData.OriginType.ToString) 'to be 'OffsetFromText'
+                ufs.Ui.SetPrompt("Select Origin Annotation")
+                ufs.Ui.SetStatus("Selecting Origin Annotation")
+                'selectOrigin()
+                selectNoteDimension("Select origin", origAnnotation)
+                If originData.OffsetAnnotation Is Nothing And origAnnotation Is Nothing Then
+                    lw.writeline("Origin annotation is required")
+                    Return
+                Else
+                    'lw.writeline("Annotation to align to  " & originData.OffsetAnnotation.Tag)
+
+                    If originData.OffsetAnnotation IsNot Nothing Then
+                        origAnnotation = originData.OffsetAnnotation
+                    End If
+                    'display form
+                    myForm.ShowDialog()
+
+                End If
+
+                'draftingSymbolBuilder0.Destroy()
+
             End If
 
-        Finally
-
-        End Try
-
-        'create new form object
-        Dim myForm As New fPosition
-        'set form object properties (current part attribute title and value)
-        'myForm.AttributeTitle = _attributeTitle
-        'myForm.AttributeValue = _attributeValue
-        'display our form
-        myForm.ShowDialog()
-
-        'If myForm.Canceled Then
-        '    'user pressed cancel, exit journal
-        '    Return
-        'Else
-        '    'user pressed OK, assign value from form to part attribute
-        '    _attributeValue = myForm.AttributeValue
-        '    workPart.SetUserAttribute(_attributeTitle, -1, _attributeValue, Update.Option.Later)
-
-        'End If
-
-
-
-
+        End If
 
         lw.Close()
+        theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Invisible)
+        theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Visible)
 
     End Sub
 
@@ -108,7 +112,14 @@ Module Module1
 
     End Function
 
+    Public Sub selectAnnotation()
+        selectNoteDimension("Select annotation to locate", selAnnotation)
 
+    End Sub
+
+    Public Sub selectOrigin()
+        selectNoteDimension("Select origin", origAnnotation)
+    End Sub
 
     Sub moveNote(delta_x As Double, delta_y As Double)
         ' ----------------------------------------------
@@ -117,104 +128,134 @@ Module Module1
         Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
         markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Start")
 
-
-        'select annotation
-        Dim draftingDatum1 As NXOpen.Annotations.DraftingDatum = CType(workPart.FindObject("ENTITY 25 1 1"), NXOpen.Annotations.DraftingDatum)
-
-        'create annotation builder
-        Dim draftingDatumFeatureSymbolBuilder1 As NXOpen.Annotations.DraftingDatumFeatureSymbolBuilder = Nothing
-        draftingDatumFeatureSymbolBuilder1 = workPart.Annotations.Datums.CreateDraftingDatumFeatureSymbolBuilder(draftingDatum1)
+        'Dim draftingDatumFeatureSymbolBuilder1 As NXOpen.Annotations.DraftingDatumFeatureSymbolBuilder = Nothing
+        'draftingDatumFeatureSymbolBuilder1 = workPart.Annotations.Datums.CreateDraftingDatumFeatureSymbolBuilder(selAnnotation)
+        'draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
 
 
-        Dim originData As NXOpen.Annotations.Annotation.AssociativeOriginData
-        originData = draftingDatumFeatureSymbolBuilder1.Origin.GetAssociativeOrigin()
-
-        'Namespaces > NXOpen.Annotations > Annotation > Annotation.AssociativeOriginData
-        lw.writeline("old position " & originData.XOffsetFactor & ";" & originData.YOffsetFactor)
-        'lw.writeline("Horizontal Annotation " & originData.HorizAnnotation.ToString)
-        'lw.writeline("Vertical Annotation " & originData.VertAnnotation.ToString)
-        lw.writeline("Type of associativity  " & originData.OriginType.ToString)
-
-        theSession.SetUndoMarkName(markId1, "Datum Feature Symbol Dialog")
-        draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
-        'Dim leaderData1 As NXOpen.Annotations.LeaderData = Nothing
-        'leaderData1 = workPart.Annotations.CreateLeaderData()
-        'leaderData1.StubSize = 0.125
-        'leaderData1.Arrowhead = NXOpen.Annotations.LeaderData.ArrowheadType.FilledArrow
-        'leaderData1.VerticalAttachment = NXOpen.Annotations.LeaderVerticalAttachment.Center
-        'draftingDatumFeatureSymbolBuilder1.Leader.Leaders.Append(leaderData1)
-        'leaderData1.TerminatorType = NXOpen.Annotations.LeaderData.LeaderType.Datum
-        'leaderData1.StubSide = NXOpen.Annotations.LeaderSide.Inferred
-        'leaderData1.Arrowhead = NXOpen.Annotations.LeaderData.ArrowheadType.FilledDatum
-        draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
-        draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
         ' ----------------------------------------------
         '   Dialog Begin Origin Tool
         ' ----------------------------------------------
         Dim assocOrigin1 As NXOpen.Annotations.Annotation.AssociativeOriginData = Nothing
         assocOrigin1.OriginType = NXOpen.Annotations.AssociativeOriginType.OffsetFromText
-
-
         Dim nullNXOpen_View As NXOpen.View = Nothing
         assocOrigin1.View = nullNXOpen_View
         assocOrigin1.ViewOfGeometry = nullNXOpen_View
         Dim nullNXOpen_Point As NXOpen.Point = Nothing
         assocOrigin1.PointOnGeometry = nullNXOpen_Point
         Dim nullNXOpen_Annotations_Annotation As NXOpen.Annotations.Annotation = Nothing
-
         assocOrigin1.VertAnnotation = nullNXOpen_Annotations_Annotation
         assocOrigin1.VertAlignmentPosition = NXOpen.Annotations.AlignmentPosition.TopLeft
         assocOrigin1.HorizAnnotation = nullNXOpen_Annotations_Annotation
         assocOrigin1.HorizAlignmentPosition = NXOpen.Annotations.AlignmentPosition.TopLeft
         assocOrigin1.AlignedAnnotation = nullNXOpen_Annotations_Annotation
         assocOrigin1.DimensionLine = 0
-
         assocOrigin1.AssociatedView = nullNXOpen_View
         assocOrigin1.AssociatedPoint = nullNXOpen_Point
-        Dim majorAngularDimension1 As NXOpen.Annotations.MajorAngularDimension = CType(workPart.FindObject("HANDLE R-1805062"), NXOpen.Annotations.MajorAngularDimension)
-
-
-        assocOrigin1.OffsetAnnotation = majorAngularDimension1
+        'specifiyng origin annotetion
+        assocOrigin1.OffsetAnnotation = origAnnotation
         'Alignment type specification
         assocOrigin1.OffsetAlignmentPosition = NXOpen.Annotations.AlignmentPosition.TopLeft
-
         lw.writeline("old position " & assocOrigin1.XOffsetFactor & ";" & assocOrigin1.YOffsetFactor)
-
         assocOrigin1.XOffsetFactor = assocOrigin1.XOffsetFactor + delta_x ' 5.0
         assocOrigin1.YOffsetFactor = assocOrigin1.YOffsetFactor + delta_y '10.0
-        'lw.writeline("offset " & delta_x & ";" & delta_y)
+        'debuging
         lw.writeline("new position position " & assocOrigin1.XOffsetFactor & ";" & assocOrigin1.YOffsetFactor)
-
-
         assocOrigin1.StackAlignmentPosition = NXOpen.Annotations.StackAlignmentPosition.Above
-        draftingDatumFeatureSymbolBuilder1.Origin.SetAssociativeOrigin(assocOrigin1)
-        'Dim point1 As NXOpen.Point3d = New NXOpen.Point3d(10.296795134302666, 17.104233695665958, 0.0)
-        'draftingDatumFeatureSymbolBuilder1.Origin.Origin.SetValue(Nothing, nullNXOpen_View, point1)
-        draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
-        theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Invisible)
-        Dim nXObject1 As NXOpen.NXObject = Nothing
-        nXObject1 = draftingDatumFeatureSymbolBuilder1.Commit()
-        theSession.SetUndoMarkName(markId1, "Datum Feature Symbol")
-        draftingDatumFeatureSymbolBuilder1.Destroy()
-        theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Visible)
         ' ----------------------------------------------
-        '   Menu: Tools->Journal->Stop Recording
-        ' ----------------------------------------------
+        Dim nullNXOpen_Point3d As NXOpen.Point3d = Nothing
+        selAnnotation.SetAssociativeOrigin(assocOrigin1, nullNXOpen_Point3d)
+        RedrawAnnotation(selAnnotation)
+
+        'selAnnotation.RedisplayObject
+        'workPart.Views.WorkView.Regenerate()
+
+        'draftingDatumFeatureSymbolBuilder1.Origin.SetAssociativeOrigin(assocOrigin1)
+
+        'draftingDatumFeatureSymbolBuilder1.Origin.SetInferRelativeToGeometry(True)
+        'theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Invisible)
+        'Dim nXObject1 As NXOpen.NXObject = Nothing
+        'nXObject1 = draftingDatumFeatureSymbolBuilder1.Commit()
+        'draftingDatumFeatureSymbolBuilder1.Destroy()
+
+
     End Sub
 
+    Sub RedrawAnnotation(annotation As NXOpen.DisplayableObject)
+        Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
+        markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Refresh")
+        Dim objects1(0) As NXOpen.DisplayableObject
+        objects1(0) = annotation
+        theSession.DisplayManager.BlankObjects(objects1)
+        Dim nErrs1 As Integer = Nothing
+        nErrs1 = theSession.UpdateManager.DoUpdate(markId1)
+        workPart.Views.WorkView.FitAfterShowOrHide(NXOpen.View.ShowOrHideType.HideOnly)
+        ' ----------------------------------------------
+        '   Menu: Edit->Undo List->1 Hide
+        ' ----------------------------------------------
+        Dim marksRecycled1 As Boolean = Nothing
+        Dim undoUnavailable1 As Boolean = Nothing
+        theSession.UndoLastNVisibleMarks(1, marksRecycled1, undoUnavailable1)
+    End Sub
 
+    '**************************************************
+    Function selectNoteDimension(ByVal prompt As String, ByRef obj As NXOpen.Annotations.Annotation)
+        'Annotation class covers dimensions and notes
+        'Annotation -> Dimension
+        'Annotation -> DraftingAid -> SimpleDraftingAid -> NoteBase -> BaseNote -> Note
+        'Dim ui As UI = GetUI()
+        Dim mask(5) As Selection.MaskTriple
+        With mask(0)
+            .Type = UFConstants.UF_dimension_type
+            .Subtype = 0
+            .SolidBodySubtype = 0
+        End With
+        With mask(1)
+            .Type = UFConstants.UF_drafting_entity_type
+            .Subtype = UFConstants.UF_draft_note_subtype
+            .SolidBodySubtype = 0
+        End With
+        With mask(2)
+            .Type = UFConstants.UF_drafting_entity_type
+            .Subtype = UFConstants.UF_draft_label_subtype
+            .SolidBodySubtype = 0
+        End With
+        With mask(3)
+            .Type = UFConstants.UF_drafting_entity_type
+            .Subtype = UFConstants.UF_draft_user_defined_subtype
+            .SolidBodySubtype = 0
+        End With
+        'surface finish
+        With mask(4)
+            .Type = 158
+            .Subtype = 2
+            .SolidBodySubtype = 0
+        End With
+        'gd&t
+        With mask(5)
+            .Type = 25
+            .Subtype = 4
+            .SolidBodySubtype = 0
+        End With
+
+        Dim cursor As NXOpen.Point3d = Nothing
+
+        Dim resp As Selection.Response =
+        theUI.SelectionManager.SelectObject(prompt, prompt,
+            Selection.SelectionScope.AnyInAssembly,
+            Selection.SelectionAction.ClearAndEnableSpecific,
+            False, False, mask, obj, cursor)
+
+        If resp = Selection.Response.ObjectSelected Or
+        resp = Selection.Response.ObjectSelectedByName Then
+            Return Selection.Response.Ok
+        Else
+            Return Selection.Response.Cancel
+        End If
+    End Function    'selectNoteDimension
+    '**************************************************
 
 End Module
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -256,12 +297,22 @@ Public Class fPosition
         End If
     End Sub
 
-    Private Sub btAnnotation_Click(sender As Object, e As EventArgs) Handles btAnnotation.Click
+    ''not working - crashes NX
+    'Private Sub btAnnotation_Click(sender As Object, e As EventArgs) Handles btAnnotation.Click
 
-    End Sub
+    '    'Dim myThread As New Thread(AddressOf selectAnnotation)
+    '    Dim myThread As New Thread(Sub()
+    '                                   selectAnnotation()
+    '                               End Sub)
+    '    myThread.Start()
+    '    myThread.Join()
+
+    'End Sub
+
 
     Private Sub btOrigin_Click(sender As Object, e As EventArgs) Handles btOrigin.Click
-
+        'selectNoteDimension("Select origin annotation.", origAnnotation)
+        selectOrigin()
     End Sub
 
 End Class
@@ -306,7 +357,7 @@ Partial Class fPosition
         '
         'posX
         '
-        Me.posX.Location = New System.Drawing.Point(32, 71)
+        Me.posX.Location = New System.Drawing.Point(32, 44)
         Me.posX.Name = "posX"
         Me.posX.Size = New System.Drawing.Size(134, 20)
         Me.posX.TabIndex = 0
@@ -315,7 +366,7 @@ Partial Class fPosition
         '
         'btUp
         '
-        Me.btUp.Location = New System.Drawing.Point(12, 123)
+        Me.btUp.Location = New System.Drawing.Point(12, 96)
         Me.btUp.Name = "btUp"
         Me.btUp.Size = New System.Drawing.Size(154, 23)
         Me.btUp.TabIndex = 1
@@ -324,7 +375,7 @@ Partial Class fPosition
         '
         'btDown
         '
-        Me.btDown.Location = New System.Drawing.Point(12, 198)
+        Me.btDown.Location = New System.Drawing.Point(12, 171)
         Me.btDown.Name = "btDown"
         Me.btDown.Size = New System.Drawing.Size(154, 23)
         Me.btDown.TabIndex = 2
@@ -333,7 +384,7 @@ Partial Class fPosition
         '
         'btLeft
         '
-        Me.btLeft.Location = New System.Drawing.Point(12, 152)
+        Me.btLeft.Location = New System.Drawing.Point(12, 125)
         Me.btLeft.Name = "btLeft"
         Me.btLeft.Size = New System.Drawing.Size(75, 40)
         Me.btLeft.TabIndex = 3
@@ -342,7 +393,7 @@ Partial Class fPosition
         '
         'btRight
         '
-        Me.btRight.Location = New System.Drawing.Point(93, 152)
+        Me.btRight.Location = New System.Drawing.Point(93, 125)
         Me.btRight.Name = "btRight"
         Me.btRight.Size = New System.Drawing.Size(73, 40)
         Me.btRight.TabIndex = 4
@@ -353,7 +404,7 @@ Partial Class fPosition
         '
         Me.numPositionIncrement.DecimalPlaces = 2
         Me.numPositionIncrement.Increment = New Decimal(New Integer() {5, 0, 0, 131072})
-        Me.numPositionIncrement.Location = New System.Drawing.Point(12, 227)
+        Me.numPositionIncrement.Location = New System.Drawing.Point(12, 200)
         Me.numPositionIncrement.Name = "numPositionIncrement"
         Me.numPositionIncrement.Size = New System.Drawing.Size(60, 20)
         Me.numPositionIncrement.TabIndex = 5
@@ -361,7 +412,7 @@ Partial Class fPosition
         '
         'posY
         '
-        Me.posY.Location = New System.Drawing.Point(32, 97)
+        Me.posY.Location = New System.Drawing.Point(32, 70)
         Me.posY.Name = "posY"
         Me.posY.Size = New System.Drawing.Size(134, 20)
         Me.posY.TabIndex = 0
@@ -371,7 +422,7 @@ Partial Class fPosition
         'Label1
         '
         Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(12, 74)
+        Me.Label1.Location = New System.Drawing.Point(12, 47)
         Me.Label1.Name = "Label1"
         Me.Label1.Size = New System.Drawing.Size(17, 13)
         Me.Label1.TabIndex = 6
@@ -380,7 +431,7 @@ Partial Class fPosition
         'Label2
         '
         Me.Label2.AutoSize = True
-        Me.Label2.Location = New System.Drawing.Point(12, 100)
+        Me.Label2.Location = New System.Drawing.Point(12, 73)
         Me.Label2.Name = "Label2"
         Me.Label2.Size = New System.Drawing.Size(17, 13)
         Me.Label2.TabIndex = 6
@@ -388,27 +439,31 @@ Partial Class fPosition
         '
         'btAnnotation
         '
+        Me.btAnnotation.Enabled = False
         Me.btAnnotation.Location = New System.Drawing.Point(12, 12)
         Me.btAnnotation.Name = "btAnnotation"
-        Me.btAnnotation.Size = New System.Drawing.Size(154, 23)
+        Me.btAnnotation.Size = New System.Drawing.Size(154, 10)
         Me.btAnnotation.TabIndex = 7
         Me.btAnnotation.Text = "Select Annotaion"
         Me.btAnnotation.UseVisualStyleBackColor = True
+        Me.btAnnotation.Visible = False
         '
         'btOrigin
         '
-        Me.btOrigin.Location = New System.Drawing.Point(12, 41)
+        Me.btOrigin.Enabled = False
+        Me.btOrigin.Location = New System.Drawing.Point(12, 28)
         Me.btOrigin.Name = "btOrigin"
-        Me.btOrigin.Size = New System.Drawing.Size(154, 23)
+        Me.btOrigin.Size = New System.Drawing.Size(154, 10)
         Me.btOrigin.TabIndex = 8
         Me.btOrigin.Text = "Select Origin"
         Me.btOrigin.UseVisualStyleBackColor = True
+        Me.btOrigin.Visible = False
         '
         'fPosition
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(178, 259)
+        Me.ClientSize = New System.Drawing.Size(178, 232)
         Me.Controls.Add(Me.btOrigin)
         Me.Controls.Add(Me.btAnnotation)
         Me.Controls.Add(Me.Label2)
@@ -420,7 +475,7 @@ Partial Class fPosition
         Me.Controls.Add(Me.btUp)
         Me.Controls.Add(Me.posY)
         Me.Controls.Add(Me.posX)
-        Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog
+        Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "fPosition"
@@ -443,3 +498,8 @@ Partial Class fPosition
     Friend WithEvents btAnnotation As Button
     Friend WithEvents btOrigin As Button
 End Class
+
+
+
+
+
