@@ -502,7 +502,6 @@ Partial Class fPosition
         Me.rb7 = New System.Windows.Forms.RadioButton()
         Me.rb8 = New System.Windows.Forms.RadioButton()
         Me.rb9 = New System.Windows.Forms.RadioButton()
-        Me.createdBy = New System.Windows.Forms.Label()
         Me.btOk = New System.Windows.Forms.Button()
         Me.ptCancel = New System.Windows.Forms.Button()
         CType(Me.numPositionIncrement, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -701,16 +700,6 @@ Partial Class fPosition
         Me.rb9.Tag = "9"
         Me.rb9.UseVisualStyleBackColor = True
         '
-        'Label3
-        '
-        Me.createdBy.AutoSize = True
-        Me.createdBy.Font = New System.Drawing.Font("Microsoft Sans Serif", 3.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.createdBy.Location = New System.Drawing.Point(151, 4)
-        Me.createdBy.Name = "createdBy"
-        Me.createdBy.Size = New System.Drawing.Size(15, 5)
-        Me.createdBy.TabIndex = 11
-        Me.createdBy.Text = "IZ code"
-        '
         'btOk
         '
         Me.btOk.Location = New System.Drawing.Point(12, 309)
@@ -736,7 +725,6 @@ Partial Class fPosition
         Me.ClientSize = New System.Drawing.Size(178, 358)
         Me.Controls.Add(Me.ptCancel)
         Me.Controls.Add(Me.btOk)
-        Me.Controls.Add(Me.createdBy)
         Me.Controls.Add(Me.gbAlignmentPosition)
         Me.Controls.Add(Me.Label2)
         Me.Controls.Add(Me.Label1)
@@ -779,7 +767,6 @@ Partial Class fPosition
     Friend WithEvents rb7 As RadioButton
     Friend WithEvents rb4 As RadioButton
     Friend WithEvents rb1 As RadioButton
-    Friend WithEvents createdBy As Label
     Friend WithEvents btOk As Button
     Friend WithEvents ptCancel As Button
 End Class
