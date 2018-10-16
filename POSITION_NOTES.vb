@@ -1,3 +1,7 @@
+'---------------------------------------------------------
+'NX journal created by Ievgen Zoriy 10/16/2018
+'to simplify positioning associated notes and dimensions 
+'---------------------------------------------------------
 Option Strict Off
 Imports System
 Imports System.Threading
@@ -6,7 +10,6 @@ Imports NXOpen
 Imports NXOpen.UF
 Imports NXOpen.UI
 Imports NXOpenUI
-'Imports NXOpen.Annotations
 
 Module Module1
 
@@ -30,6 +33,9 @@ Module Module1
 
     Sub Main()
 
+        Dim strFrmat As String = "0.0000"
+
+
         'lw.Open()
         'lw.writeline("journal opened")
 
@@ -47,7 +53,7 @@ Module Module1
         ufs.Ui.SetPrompt("Select Annotation to edit")
         ufs.Ui.SetStatus("Selecting Annotation to edit")
         'selectAnnotation()
-        If selectNoteDimension("Select annotation to locate.", selAnnotation) = Selection.Response.Ok Then
+        If selectNoteDimension("Select annotation to locate.", selAnnotation, True) = Selection.Response.Ok Then
             If selAnnotation IsNot Nothing Then
 
                 Dim nullNXOpen_Point3d As NXOpen.Point3d = Nothing
@@ -55,8 +61,8 @@ Module Module1
                 originData = selAnnotation.GetAssociativeOrigin(nullNXOpen_Point3d)
                 'Namespaces > NXOpen.Annotations > Annotation > Annotation.AssociativeOriginData
                 lw.writeline("old position " & originData.XOffsetFactor & ";" & originData.YOffsetFactor)
-                myForm.posX.Text = originData.XOffsetFactor
-                myForm.posY.Text = originData.YOffsetFactor
+                myForm.posX.Text = Format(originData.XOffsetFactor, strFrmat)
+                myForm.posY.Text = Format(originData.YOffsetFactor, strFrmat)
                 'lw.writeline("Horizontal Alignment Position " & originData.HorizAlignmentPosition)
                 'lw.writeline("Vertical Alignment Position " & originData.VertAlignmentPosition)
                 lw.writeline("Type of associativity  " & originData.OriginType.ToString) 'to be 'OffsetFromText'
@@ -69,13 +75,22 @@ Module Module1
                     Return
                 Else
                     'lw.writeline("Annotation to align to  " & originData.OffsetAnnotation.Tag)
-
                     If originData.OffsetAnnotation IsNot Nothing Then
                         origAnnotation = originData.OffsetAnnotation
                     End If
+
+                    'avoid circular reference
+
+
+
+                    'avoid selection of same object (double-check)
+                    If origAnnotation.Equals(selAnnotation) Then
+                        lw.writeline("Select two different objects")
+                        Return
+                    End If
+
                     'display form
                     myForm.ShowDialog()
-
                 End If
 
                 'draftingSymbolBuilder0.Destroy()
@@ -160,7 +175,7 @@ Module Module1
         'annotation.RedisplayObject 'not working rightaway
         'workPart.Views.WorkView.Regenerate() 'blinking all drawing (annoyng)
 
-        'a bit crazy way but it's working
+        'a bit crazy way, but it's working
         Dim markId1 As NXOpen.Session.UndoMarkId = Nothing
         markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Refresh")
         Dim objects1(0) As NXOpen.DisplayableObject
@@ -179,7 +194,7 @@ Module Module1
     End Sub
 
     '**************************************************
-    Function selectNoteDimension(ByVal prompt As String, ByRef obj As NXOpen.Annotations.Annotation)
+    Function selectNoteDimension(ByVal prompt As String, ByRef obj As NXOpen.Annotations.Annotation, Optional ByVal KeepSel As Boolean = False)
         'Annotation class covers dimensions and notes
         'Annotation -> Dimension
         'Annotation -> DraftingAid -> SimpleDraftingAid -> NoteBase -> BaseNote -> Note
@@ -223,9 +238,9 @@ Module Module1
 
         Dim resp As Selection.Response =
         theUI.SelectionManager.SelectObject(prompt, prompt,
-            Selection.SelectionScope.AnyInAssembly,
+            Selection.SelectionScope.WorkPart,
             Selection.SelectionAction.ClearAndEnableSpecific,
-            False, False, mask, obj, cursor)
+            False, KeepSel, mask, obj, cursor)
 
         If resp = Selection.Response.ObjectSelected Or
         resp = Selection.Response.ObjectSelectedByName Then
