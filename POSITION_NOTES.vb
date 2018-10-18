@@ -12,6 +12,8 @@ Imports NXOpen.UI
 Imports NXOpenUI
 
 Module Module1
+    Dim isDebugging As Boolean = False
+
 
     Dim theSession As NXOpen.Session = NXOpen.Session.GetSession()
     Dim workPart As NXOpen.Part = theSession.Parts.Work
@@ -69,7 +71,10 @@ Module Module1
                 Dim originData As NXOpen.Annotations.Annotation.AssociativeOriginData
                 originData = selAnnotation.GetAssociativeOrigin(nullNXOpen_Point3d)
                 'Namespaces > NXOpen.Annotations > Annotation > Annotation.AssociativeOriginData
-                lw.writeline("old position " & originData.XOffsetFactor & ";" & originData.YOffsetFactor)
+                If isDebugging Then
+                    lw.writeline("old position " & originData.XOffsetFactor & ";" & originData.YOffsetFactor)
+                End If
+
 
                 myForm.posX.Text = Format(originData.XOffsetFactor, strFrmat)
                 myForm.posY.Text = Format(originData.YOffsetFactor, strFrmat)
@@ -97,10 +102,12 @@ Module Module1
                         myForm.rb1.Checked = True
                 End Select
 
-                lw.writeline("Horizontal Alignment Position " & originData.HorizAlignmentPosition)
-                lw.writeline("Vertical Alignment Position " & originData.VertAlignmentPosition)
-                lw.writeline("OffsetAlignmentPosition " & originData.OffsetAlignmentPosition)
-                lw.writeline("Type of associativity  " & originData.OriginType.ToString) 'to be 'OffsetFromText'
+                If isDebugging Then
+                    lw.writeline("Horizontal Alignment Position " & originData.HorizAlignmentPosition)
+                    lw.writeline("Vertical Alignment Position " & originData.VertAlignmentPosition)
+                    lw.writeline("OffsetAlignmentPosition " & originData.OffsetAlignmentPosition)
+                    lw.writeline("Type of associativity  " & originData.OriginType.ToString) 'to be 'OffsetFromText'
+                End If
 
                 ufs.Ui.SetPrompt("Select Origin Annotation")
                 ufs.Ui.SetStatus("Selecting Origin Annotation")
@@ -223,7 +230,9 @@ Module Module1
         assocOrigin1.XOffsetFactor = assocOrigin1.XOffsetFactor + delta_x ' 5.0
         assocOrigin1.YOffsetFactor = assocOrigin1.YOffsetFactor + delta_y '10.0
         'debuging
-        lw.writeline("new position position " & assocOrigin1.XOffsetFactor & ";" & assocOrigin1.YOffsetFactor)
+        If isDebugging Then
+            lw.writeline("new position position " & assocOrigin1.XOffsetFactor & ";" & assocOrigin1.YOffsetFactor)
+        End If
 
         assocOrigin1.StackAlignmentPosition = NXOpen.Annotations.StackAlignmentPosition.Above
         ' ----------------------------------------------
