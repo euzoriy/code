@@ -135,6 +135,12 @@ Module Module1
                         origAnnotation = originData.OffsetAnnotation
                     End If
 
+                    'reset position if linking to other annotation
+                    If Not origAnnotation.Equals(originData.OffsetAnnotation) Then
+                        myForm.posX.Text = Format(0, strFrmat)
+                        myForm.posY.Text = Format(0, strFrmat)
+                    End If
+
                     'avoid circular reference
                     If haveCircularReference(selAnnotation, origAnnotation) Then
                         MessageBox.Show("Selection will create circular reference.", "Circular reference")
@@ -161,13 +167,15 @@ Module Module1
         lw.Close()
 
         If pUpdateCanceled Then
-            Undo()
+            'Undo()
+            theSession.UndoToMark(markId1, undoMarkName)
+            theSession.DeleteUndoMark(markId1, Nothing)
         Else
             theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Visible)
             Dim nErrs1 As Integer = Nothing
             nErrs1 = theSession.UpdateManager.DoUpdate(markId1)
         End If
-        'theSession.DeleteUndoMark(markId1, Nothing)
+
     End Sub
 
 
@@ -293,8 +301,6 @@ Module Module1
         Dim undoUnavailable1 As Boolean = Nothing
         theSession.UndoLastNVisibleMarks(1, marksRecycled1, undoUnavailable1)
     End Sub
-
-
 
     Public Sub DeselectAnnotations()
         selAnnotation.Unhighlight()
@@ -744,11 +750,11 @@ Partial Class fPosition
         '
         Me.createdBy.AutoSize = True
         Me.createdBy.Font = New System.Drawing.Font("Microsoft Sans Serif", 3.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.createdBy.Location = New System.Drawing.Point(151, 4)
+        Me.createdBy.Location = New System.Drawing.Point(5, 5)
         Me.createdBy.Name = "createdBy"
         Me.createdBy.Size = New System.Drawing.Size(15, 5)
         Me.createdBy.TabIndex = 11
-        Me.createdBy.Text = "IZ code"
+        Me.createdBy.Text = "IZ"
         '
         'btOk
         '
