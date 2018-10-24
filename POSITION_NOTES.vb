@@ -30,7 +30,7 @@ Module Module1
     Dim selAnnotation As NXOpen.Annotations.Annotation 'NXObject
     Dim origAnnotation As NXOpen.Annotations.Annotation 'NXObject
     Dim NewAlignmentPosition As Integer
-
+    Dim updateCanceled As Boolean
 
     'create new form object
     Dim myForm As New fPosition
@@ -41,6 +41,15 @@ Module Module1
         End Get
         Set(value As Integer)
             NewAlignmentPosition = value
+        End Set
+    End Property
+
+    Public Property pUpdateCanceled As Boolean
+        Get
+            Return updateCanceled
+        End Get
+        Set(value As Boolean)
+            updateCanceled = value
         End Set
     End Property
 
@@ -59,6 +68,8 @@ Module Module1
         Const undoMarkName As String = "Modifiying annotation position"
         Dim markId1 As Session.UndoMarkId
         markId1 = theSession.SetUndoMark(Session.MarkVisibility.Visible, undoMarkName)
+
+        pUpdateCanceled = False
 
         'Select annotation to work with
         ufs.Ui.SetPrompt("Select Annotation to edit")
@@ -149,12 +160,18 @@ Module Module1
 
         lw.Close()
 
-        theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Visible)
-        Dim nErrs1 As Integer = Nothing
-        nErrs1 = theSession.UpdateManager.DoUpdate(markId1)
-
+        If pUpdateCanceled Then
+            Undo()
+        Else
+            theSession.SetUndoMarkVisibility(markId1, Nothing, NXOpen.Session.MarkVisibility.Visible)
+            Dim nErrs1 As Integer = Nothing
+            nErrs1 = theSession.UpdateManager.DoUpdate(markId1)
+        End If
         'theSession.DeleteUndoMark(markId1, Nothing)
     End Sub
+
+
+
 
     Public Function GetUnloadOption(ByVal dummy As String) As Integer
 
@@ -242,7 +259,8 @@ Module Module1
     End Sub
 
     Sub RedrawAnnotation(annotation As NXOpen.DisplayableObject)
-        'annotation.RedisplayObject 'not working rightaway
+
+        annotation.RedisplayObject 'not working rightaway
         'workPart.Views.WorkView.Regenerate() 'blinking all drawing (annoyng)
 
         'a bit crazy way, but it's working
@@ -250,18 +268,33 @@ Module Module1
         markId1 = theSession.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Refresh")
         Dim objects1(0) As NXOpen.DisplayableObject
         objects1(0) = annotation
-        theSession.DisplayManager.BlankObjects(objects1)
         Dim nErrs1 As Integer = Nothing
+        theSession.DisplayManager.BlankObjects(objects1)
+        'nErrs1 = theSession.UpdateManager.DoUpdate(markId1)
+        theSession.DisplayManager.UnBlankObjects(objects1)
+
         nErrs1 = theSession.UpdateManager.DoUpdate(markId1)
-        workPart.Views.WorkView.FitAfterShowOrHide(NXOpen.View.ShowOrHideType.HideOnly)
+
+        theSession.DeleteUndoMark(markId1, Nothing)
+
+        'workPart.Views.WorkView.FitAfterShowOrHide(NXOpen.View.ShowOrHideType.HideOnly)
         ' ----------------------------------------------
         '   Menu: Edit->Undo List->1 Hide
         ' ----------------------------------------------
+        'Dim marksRecycled1 As Boolean = Nothing
+        'Dim undoUnavailable1 As Boolean = Nothing
+        'theSession.UndoLastNVisibleMarks(1, marksRecycled1, undoUnavailable1)
+        'Undo()
+
+    End Sub
+
+    Public Sub Undo()
         Dim marksRecycled1 As Boolean = Nothing
         Dim undoUnavailable1 As Boolean = Nothing
         theSession.UndoLastNVisibleMarks(1, marksRecycled1, undoUnavailable1)
-
     End Sub
+
+
 
     Public Sub DeselectAnnotations()
         selAnnotation.Unhighlight()
@@ -327,10 +360,6 @@ Module Module1
 
 End Module
 
-
-
-
-
 ' -----------------------------------------------------------------
 Public Class fPosition
     Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -386,6 +415,7 @@ Public Class fPosition
     End Sub
 
     Private Sub ptCancel_Click(sender As Object, e As EventArgs) Handles ptCancel.Click
+        pUpdateCanceled = True
         _canceled = True
         DeselectAnnotations()
         Me.Close()
@@ -760,6 +790,7 @@ Partial Class fPosition
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "fPosition"
+        Me.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent
         Me.Text = "Note positioning"
         CType(Me.numPositionIncrement, System.ComponentModel.ISupportInitialize).EndInit()
         Me.gbAlignmentPosition.ResumeLayout(False)
