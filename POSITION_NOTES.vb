@@ -176,6 +176,8 @@ Module Module1
             nErrs1 = theSession.UpdateManager.DoUpdate(markId1)
         End If
 
+        DeselectAnnotations()
+
     End Sub
 
 
@@ -749,12 +751,12 @@ Partial Class fPosition
         'Label3
         '
         Me.createdBy.AutoSize = True
-        Me.createdBy.Font = New System.Drawing.Font("Microsoft Sans Serif", 3.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
-        Me.createdBy.Location = New System.Drawing.Point(5, 5)
+        Me.createdBy.Font = New System.Drawing.Font("Microsoft Sans Serif", 3.5!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.createdBy.Location = New System.Drawing.Point(125, 5)
         Me.createdBy.Name = "createdBy"
-        Me.createdBy.Size = New System.Drawing.Size(15, 5)
+        Me.createdBy.Size = New System.Drawing.Size(135, 5)
         Me.createdBy.TabIndex = 11
-        Me.createdBy.Text = "IZ"
+        Me.createdBy.Text = "created by I Zorii"
         '
         'btOk
         '
