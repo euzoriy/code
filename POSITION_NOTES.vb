@@ -504,6 +504,13 @@ Public Class fPosition
     '    selectOrigin()
     'End Sub
 
+    Private Sub fPosition_MouseClick(sender As Object, e As MouseEventArgs) Handles MyBase.MouseClick
+        If (e.Button = MouseButtons.Middle) Then
+            UpdatePosition()
+            Me.Close()
+        End If
+    End Sub
+
 End Class
 
 <Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
@@ -795,6 +802,7 @@ Partial Class fPosition
         Me.Controls.Add(Me.posY)
         Me.Controls.Add(Me.posX)
         Me.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle
+        'Me.Location = New System.Drawing.Point(500, 0)
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.Name = "fPosition"
